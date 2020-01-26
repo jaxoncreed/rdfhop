@@ -8,8 +8,4 @@ export default class Literal extends RDFNode {
   constructor (value: LiteralInputValue, type?: LiteralType) {
 
   }
-
-  canBePredicate () {
-    return false
-  }
 }

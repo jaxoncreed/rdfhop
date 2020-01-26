@@ -1,3 +1,7 @@
+/**
+ * TODO: consider replacing this with RDF ext
+ */
+
 import parseInputAsNode, { InputAsNode, parseInputAsPredicateNode } from './util/parseInputAsNode'
 import RDFNode from './RDFNode'
 import NamedNode from './NamedNode'
