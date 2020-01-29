@@ -118,6 +118,26 @@ export default abstract class RDFNode implements Traversable {
     return this.addHelper(true, predicate, subject, graphs)
   }
 
+  private deleteHelper (isIn: boolean, predicate: NodeInput, subjectOrObject: NodeInput, graphs?: Graph[]): RDFNode {
+    const p = RDFNode.fromNodeInput(predicate, this.globalGraph) as NamedNode
+    const sOrO = RDFNode.fromNodeInput(subjectOrObject, this.globalGraph)
+    const triple = (isIn) ? new Triple(sOrO, p, this) : new Triple(this, p, sOrO)
+    this.reciprocateDelete(isIn, p, sOrO)
+    this.globalGraph.removeTriple(triple)
+    sOrO.reciprocateDelete(!isIn, p, this)
+    return this
+  }
+
+  protected reciprocateDelete (isIn: boolean, predicate: NamedNode, subjectOrObject: RDFNode) {
+    const map = (isIn) ? this.inMap : this.outMap
+    if (map.has(predicate.value())) {
+      const nodeIndex = map.get(predicate.value()).indexOf(subjectOrObject)
+      if (nodeIndex) {
+        map.get(predicate.value()).splice(nodeIndex, 1)
+      }
+    }
+  }
+
   /**
    * Delete one connection to a given node using a given predicate
    * @param predicate The given predicate pointing to the given node
@@ -125,7 +145,7 @@ export default abstract class RDFNode implements Traversable {
    * @param graphs Optional restrict removing from a particular set of graphs
    */
   deleteOut (predicate: NodeInput, object: NodeInput, graphs?: Graph[]): RDFNode {
-    throw new Error('Not Implemented')
+    return this.deleteHelper(false, predicate, object, graphs)
   }
 
   /**
@@ -135,7 +155,7 @@ export default abstract class RDFNode implements Traversable {
    * @param graphs Optinally restrict removing from a particular set of graphs
    */
   deleteIn (predicate: NodeInput, subject: NodeInput, graphs?: Graph[]): RDFNode {
-    throw new Error('Not Implemented')
+    return this.deleteHelper(true, predicate, subject, graphs)
   }
 
   /**
