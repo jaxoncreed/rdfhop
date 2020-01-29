@@ -1,7 +1,7 @@
 import RDFNode from './RDFNode'
 import Traversable from './Traversable'
-import { InputAsNode } from './util/parseInputAsNode'
 import Graph from './Graph'
+import NodeInput from './NodeInput'
 
 // TODO: convert this to a set
 export default class NodeSet extends Array<RDFNode> implements Traversable {
@@ -9,59 +9,79 @@ export default class NodeSet extends Array<RDFNode> implements Traversable {
     super(...items)
   }
 
-  out (predicate: InputAsNode, graphs?: Graph[]): NodeSet {
-
+  private applyToAllNodes (functionToApply: (node: RDFNode) => any) {
+    return new NodeSet(...this.reduce((aggNodes: RDFNode[], node: RDFNode) => aggNodes.concat(functionToApply(node)), []))
   }
 
-  in (predicate: InputAsNode, graphs?: Graph[]): NodeSet {
+  out (predicate: NodeInput, graphs?: Graph[]): NodeSet {
+    return this.applyToAllNodes((node: RDFNode) => node.out(predicate, graphs))
+  }
 
+  in (predicate: NodeInput, graphs?: Graph[]): NodeSet {
+    return this.applyToAllNodes((node: RDFNode) => node.in(predicate, graphs))
   }
 
   outAll (graphs?: Graph[]): NodeSet {
-
+    return this.applyToAllNodes((node: RDFNode) => node.outAll(graphs))
   }
 
   inAll (graphs?: Graph[]): NodeSet {
-
+    return this.applyToAllNodes((node: RDFNode) => node.inAll(graphs))
   }
 
   outPredicate (graphs?: Graph[]): NodeSet {
-
+    return this.applyToAllNodes((node: RDFNode) => node.outPredicate(graphs))
   }
 
   inPredicate (graphs?: Graph[]): NodeSet {
-    
+    return this.applyToAllNodes((node: RDFNode) => node.inPredicate(graphs))
   }
 
-  addOut (predicate: InputAsNode, object: InputAsNode, graphs?: Graph[]): NodeSet {
-
+  addOut (predicate: NodeInput, object: NodeInput, graphs?: Graph[]): NodeSet {
+    this.applyToAllNodes((node: RDFNode) => node.addOut(predicate, object, graphs))
+    return this
   }
 
-  addIn (predicate: InputAsNode, subject: InputAsNode, graphs?: Graph[]): NodeSet {
-
+  addIn (predicate: NodeInput, subject: NodeInput, graphs?: Graph[]): NodeSet {
+    this.applyToAllNodes((node: RDFNode) => node.addIn(predicate, subject, graphs))
+    return this
   }
 
-  deleteOut (predicate: InputAsNode, object: InputAsNode, graphs?: Graph[]): NodeSet {
-
+  deleteOut (predicate: NodeInput, object: NodeInput, graphs?: Graph[]): NodeSet {
+    this.applyToAllNodes((node: RDFNode) => node.deleteOut(predicate, object, graphs))
+    return this
   }
 
-  deleteIn (predicate: InputAsNode, subject: InputAsNode, graphs?: Graph[]): NodeSet {
-
+  deleteIn (predicate: NodeInput, subject: NodeInput, graphs?: Graph[]): NodeSet {
+    this.applyToAllNodes((node: RDFNode) => node.deleteIn(predicate, subject, graphs))
+    return this
   }
 
-  one (): RDFNode {
-
+  one (): RDFNode | null {
+    return this[0]
   }
 
   unique (): NodeSet {
-
+    throw new Error('Not Implemented')
   }
 
   union (...set: NodeSet): NodeSet {
-
+    throw new Error('Not Implemented')
   }
 
   difference (set: NodeSet): NodeSet {
+    throw new Error('Not Implemented')
+  }
 
+  addNode (node: RDFNode): NodeSet {
+    this.push(node)
+    return this
+  }
+
+  addUniqueNode (node: RDFNode): NodeSet {
+    if (!this.some((containedNode) => containedNode === node)) {
+      this.push(node)
+    }
+    return this
   }
 }

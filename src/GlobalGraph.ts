@@ -1,7 +1,6 @@
 import Graph from './Graph'
-import { InputAsNode } from './util/parseInputAsNode';
 import NamedNode from './NamedNode';
-import Literal, { LiteralInputValue } from './Literal';
+import Literal, { LiteralInputValue, LiteralType } from './Literal';
 import BlankNode from './BlankNode';
 
 /**
@@ -9,6 +8,9 @@ import BlankNode from './BlankNode';
  * of global nodes and graphs
  */
 export default class GlobalGraph extends Graph {
+  private graphs: Map<string, Graph> = new Map<string, Graph>()
+  private namedNodes: Map<string, NamedNode> = new Map<string, NamedNode>()
+  private literals: Map<string, Literal> = new Map<string, Literal>()
 
   constructor () {
     super('')
@@ -20,7 +22,12 @@ export default class GlobalGraph extends Graph {
    * @param name The graph's name
    */
   graph (name: string): Graph {
-
+    if (this.graphs.get(name)) {
+      return this.graphs.get(name)
+    }
+    const graph = new Graph(name, this, this)
+    this.graphs.set(name, graph)
+    return graph
   }
 
   /**
@@ -28,8 +35,13 @@ export default class GlobalGraph extends Graph {
    * a given name
    * @param name 
    */
-  namedNode (name: InputAsNode): NamedNode  {
-
+  namedNode (nodeIdentifier: string | URL): NamedNode  {
+    const potentialNode = new NamedNode(nodeIdentifier, this)
+    if (this.namedNodes.has(potentialNode.value())) {
+      return this.namedNodes.get(potentialNode.value())
+    }
+    this.namedNodes.set(potentialNode.value(), potentialNode)
+    return potentialNode
   }
 
   /**
@@ -37,14 +49,19 @@ export default class GlobalGraph extends Graph {
    * nodes do no have names, there is no need to ensure this is the only instance of it.
    */
   blankNode (): BlankNode {
-
+    return new BlankNode(this)
   }
 
   /**
    * Creates a literal and registers it so that it is the unique instance of a literal of this value
    * @param value The real value of the literal
    */
-  literal (value: LiteralInputValue): Literal {
-
+  literal (value: LiteralInputValue, type?: LiteralType): Literal {
+    const potentialNode = new Literal(this, value, type)
+    if (this.literals.has(potentialNode.value())) {
+      return this.literals.get(potentialNode.value())
+    }
+    this.literals.set(potentialNode.value(), potentialNode)
+    return potentialNode
   }
 }
