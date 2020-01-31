@@ -1,5 +1,7 @@
-import RDFNode from './RDFNode'
-import GlobalGraph from './GlobalGraph';
+import {
+  RDFNode,
+  GlobalGraph
+} from './internal'
 
 export default class NamedNode extends RDFNode {
   private identifier: string

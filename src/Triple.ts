@@ -2,8 +2,10 @@
  * TODO: consider replacing this with RDF ext
  */
 
-import RDFNode from './RDFNode'
-import NamedNode from './NamedNode'
+import {
+  RDFNode,
+  NamedNode
+} from './internal'
 
 export default class Triple {
   public readonly s: RDFNode

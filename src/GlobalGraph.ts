@@ -1,7 +1,11 @@
-import Graph from './Graph'
-import NamedNode from './NamedNode';
-import Literal, { LiteralInputValue, LiteralType } from './Literal';
-import BlankNode from './BlankNode';
+import {
+  Graph,
+  NamedNode,
+  Literal,
+  LiteralInputValue,
+  LiteralType,
+  BlankNode
+} from './internal'
 
 /**
  * A global grpah is the top level graph for a graph heirachy. It is responsible for keeping track

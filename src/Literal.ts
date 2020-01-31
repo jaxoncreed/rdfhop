@@ -1,5 +1,7 @@
-import RDFNode from './RDFNode'
-import GlobalGraph from './GlobalGraph'
+import {
+  RDFNode,
+  GlobalGraph
+} from './internal'
 
 // TODO: expand with literal types: https://www.w3.org/2011/rdf-wg/wiki/XSD_Datatypes
 export type LiteralInputValue = number | string | boolean
@@ -32,8 +34,8 @@ export default class Literal extends RDFNode {
     return 'literal' as 'literal'
   }
 
-  value () {
-    return `${this.value}^^xsd:${this.valueType}`
+  value (): string {
+    return `${this.rawValue()}^^xsd:${this.valueType}`
   }
 
   rawValue (): any {

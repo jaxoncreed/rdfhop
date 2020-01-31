@@ -1,7 +1,9 @@
-import RDFNode from './RDFNode'
-import Traversable from './Traversable'
-import Graph from './Graph'
-import NodeInput from './NodeInput'
+import {
+  RDFNode,
+  Traversable,
+  Graph,
+  NodeInput
+} from './internal'
 
 // TODO: convert this to a set
 export default class NodeSet extends Array<RDFNode> implements Traversable {
@@ -10,7 +12,7 @@ export default class NodeSet extends Array<RDFNode> implements Traversable {
   }
 
   private applyToAllNodes (functionToApply: (node: RDFNode) => any) {
-    return new NodeSet(...this.reduce((aggNodes: RDFNode[], node: RDFNode) => aggNodes.concat(functionToApply(node)), []))
+    return NodeSet.create(...this.reduce((aggNodes: RDFNode[], node: RDFNode) => aggNodes.concat(functionToApply(node)), []))
   }
 
   out (predicate: NodeInput, graphs?: Graph[]): NodeSet {
@@ -83,5 +85,11 @@ export default class NodeSet extends Array<RDFNode> implements Traversable {
       this.push(node)
     }
     return this
+  }
+
+  static create (...items: RDFNode[]): NodeSet {
+    const nodeSet: NodeSet = Object.create(NodeSet.prototype)
+    items.forEach((item) => nodeSet.push(item))
+    return nodeSet
   }
 }

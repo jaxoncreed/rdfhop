@@ -1,11 +1,13 @@
-import Graph from './Graph'
-import NodeSet from './NodeSet'
-import Traversable from './Traversable'
-import NodeInput from './NodeInput'
-import NamedNode from './NamedNode'
-import Literal, { LiteralType } from './Literal'
-import GlobalGraph from './GlobalGraph'
-import Triple from './Triple'
+import {
+  Graph,
+  NodeInput,
+  GlobalGraph,
+  NamedNode,
+  Triple,
+  getNode,
+  NodeSet,
+  Traversable
+ } from './internal'
 
 /**
  * An abstract RDF node
@@ -23,13 +25,13 @@ export default abstract class RDFNode implements Traversable {
   }
 
   private traverseHelper (isIn: boolean, predicate: NodeInput, graphs?: Graph[]): NodeSet {
-    const p = RDFNode.fromNodeInput(predicate, this.globalGraph)
+    const p = getNode(predicate, this.globalGraph)
     const map = (isIn) ? this.inMap : this.outMap
     let nodeList = map.get(p.value())
     if (graphs) {
       nodeList = nodeList.filter((node) => graphs.some((graph) => graph.hasNode(node)))
     }
-    return new NodeSet(...nodeList)
+    return NodeSet.create(...nodeList)
   }
 
   /**
@@ -54,7 +56,7 @@ export default abstract class RDFNode implements Traversable {
     const map = (isIn) ? this.inMap : this.outMap
     const method = (isIn) ? this.in : this.out
     const predicates = Array.from(map.keys())
-    return new NodeSet(...predicates.reduce((aggSet: NodeSet, key) => aggSet.concat(method(key, graphs)), []))
+    return NodeSet.create(...predicates.reduce((aggSet: NodeSet, key) => aggSet.concat(method(key, graphs)), []))
   }
 
   outAll (graphs?: Graph[]): NodeSet {
@@ -67,8 +69,8 @@ export default abstract class RDFNode implements Traversable {
 
   private traversePredicateHelper (isIn: boolean, graphs?: Graph[]): NodeSet {
     const map = (isIn) ? this.inMap : this.outMap
-    const predicates = Array.from(map.keys()).map(key => RDFNode.fromNodeInput(key, this.globalGraph))
-    return new NodeSet(...predicates)
+    const predicates = Array.from(map.keys()).map(key => getNode(key, this.globalGraph))
+    return NodeSet.create(...predicates)
   }
 
   outPredicate (graphs?: Graph[]): NodeSet {
@@ -80,11 +82,16 @@ export default abstract class RDFNode implements Traversable {
   }
 
   private addHelper (isIn: boolean, predicate: NodeInput, subjectOrObject: NodeInput, graphs?: Graph[]): RDFNode {
-    const p = RDFNode.fromNodeInput(predicate, this.globalGraph) as NamedNode
-    const sOrO = RDFNode.fromNodeInput(subjectOrObject, this.globalGraph)
+    const p = getNode(predicate, this.globalGraph) as NamedNode
+    const sOrO = getNode(subjectOrObject, this.globalGraph)
     const triple = (isIn) ? new Triple(sOrO, p, this) : new Triple(this, p, sOrO)
     this.reciprocateAdd(isIn, p, sOrO)
-    this.globalGraph.addTriple(triple)
+    // TODO: this is bad. it will add the same triple to the global graph is multiple graphs are provided
+    if (graphs) {
+      graphs.forEach(graph => graph.addTriple(triple))
+    } else {
+      this.globalGraph.addTriple(triple)
+    }
     sOrO.reciprocateAdd(!isIn, p, this)
     return this
   }
@@ -119,11 +126,16 @@ export default abstract class RDFNode implements Traversable {
   }
 
   private deleteHelper (isIn: boolean, predicate: NodeInput, subjectOrObject: NodeInput, graphs?: Graph[]): RDFNode {
-    const p = RDFNode.fromNodeInput(predicate, this.globalGraph) as NamedNode
-    const sOrO = RDFNode.fromNodeInput(subjectOrObject, this.globalGraph)
+    const p = getNode(predicate, this.globalGraph) as NamedNode
+    const sOrO = getNode(subjectOrObject, this.globalGraph)
     const triple = (isIn) ? new Triple(sOrO, p, this) : new Triple(this, p, sOrO)
     this.reciprocateDelete(isIn, p, sOrO)
-    this.globalGraph.removeTriple(triple)
+    // TODO: this is bad it will delete multiple triples from global graph if more than one graph
+    if (graphs) {
+      graphs.forEach(graph => graph.addTriple(triple))
+    } else {
+      this.globalGraph.removeTriple(triple)
+    }
     sOrO.reciprocateDelete(!isIn, p, this)
     return this
   }
@@ -158,6 +170,16 @@ export default abstract class RDFNode implements Traversable {
     return this.deleteHelper(true, predicate, subject, graphs)
   }
 
+  toString (): string {
+    let str = `<${this.value()}>\n`
+    this.outPredicate().forEach((predicate) => {
+      this.out(predicate).forEach((object) => {
+        str += `  <${predicate.value()}> <${object.value()}>\n`
+      })
+    })
+    return str
+  }
+
   /**
    * Return the value of this node
    */
@@ -167,23 +189,4 @@ export default abstract class RDFNode implements Traversable {
    * Get the node type
    */
   abstract type (): 'named' | 'literal' | 'blank'
-
-  static fromNodeInput(nodeInput: NodeInput, globalGraph: GlobalGraph, valueType?: LiteralType) {
-    if (nodeInput instanceof RDFNode) {
-      return nodeInput
-    } else if (nodeInput instanceof URL) {
-      return new NamedNode(nodeInput.toString(), globalGraph)
-    } else if (typeof nodeInput === 'string' && !valueType) {
-      try {
-        new URL(nodeInput)
-        return new NamedNode(nodeInput, globalGraph)
-      } catch (err) {
-        return new Literal(globalGraph, nodeInput, valueType)
-      }
-    } else {
-      return new Literal(globalGraph, nodeInput, valueType)
-    }
-  }
-
-
 }

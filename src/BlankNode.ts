@@ -1,4 +1,4 @@
-import RDFNode from './RDFNode'
+import { RDFNode } from './internal'
 
 export default class BlankNode extends RDFNode {
   type () {

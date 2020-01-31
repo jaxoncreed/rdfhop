@@ -1,6 +1,10 @@
-import Triple from './Triple'
-import RDFNode from './RDFNode'
-import NodeSet from './NodeSet'
+import {
+  GlobalGraph,
+  Triple,
+  getNode,
+  RDFNode,
+  NodeSet
+} from './internal'
 
 export type SPARQLSelectResult = { [key: string]: RDFNode }[]
 
@@ -21,10 +25,10 @@ export default class Graph {
    * The global graph with which this graph is registered. It may or may not be the parent graph for
    * this graph
    */
-  private globalGraph?: Graph
+  private globalGraph?: GlobalGraph
   private tripleCount: Map<string, { triple: Triple, count: number }> = new Map<string, { triple: Triple, count: number }>()
 
-  constructor (name?: string, globalGraph?: Graph, parentGraph?: Graph) {
+  constructor (name?: string, globalGraph?: GlobalGraph, parentGraph?: Graph) {
     this.name = name
     this.globalGraph = globalGraph
     this.parentGraph = parentGraph
@@ -35,7 +39,9 @@ export default class Graph {
    * @param triple The triple to add
    */
   addTriple (triple: Triple): Graph {
-    this.parentGraph.addTriple(triple)
+    if (this.parentGraph) {
+      this.parentGraph.addTriple(triple)
+    }
     const tripleHash = triple.hash()
     if (this.tripleCount.get(tripleHash)) {
       this.tripleCount.get(tripleHash).count++
@@ -51,7 +57,9 @@ export default class Graph {
    * @param triple The tiple to remove
    */
   removeTriple (triple: Triple): Graph {
-    this.parentGraph.removeTriple(triple)
+    if (this.parentGraph) {
+      this.parentGraph.removeTriple(triple)
+    }
     const tripleHash = triple.hash() 
     this.tripleCount.get(tripleHash).count--
     if (this.tripleCount.get(tripleHash).count <= 0) {
@@ -67,8 +75,10 @@ export default class Graph {
   removeAllTriples (triple: Triple): Graph {
     this.tripleCount.forEach(({ triple, count }, key) => {
       this.tripleCount.delete(key)
-      for (let i = 0; i < count; i++) {
-        this.parentGraph.removeTriple(triple)
+      if (this.parentGraph) {
+        for (let i = 0; i < count; i++) {
+          this.parentGraph.removeTriple(triple)
+        }
       }
     })
     return this
@@ -115,7 +125,7 @@ export default class Graph {
   }
 
   nodes (): NodeSet {
-    const nodeSet = new NodeSet()
+    const nodeSet = NodeSet.create()
     this.tripleCount.forEach(({ triple }) => {
       nodeSet.addUniqueNode(triple.s)
       nodeSet.addUniqueNode(triple.o)
@@ -124,8 +134,11 @@ export default class Graph {
   }
 
   hasNode (rdfNode: RDFNode): boolean {
+    const globalRDFNode = getNode(rdfNode, this.globalGraph)
     return Array.from(this.tripleCount.entries()).some(([key, { triple }]) => {
-      return rdfNode === triple.o || rdfNode === triple.s
+      const globalS = getNode(rdfNode, this.globalGraph)
+      const globalO = getNode(rdfNode, this.globalGraph)
+      return globalRDFNode === globalS || globalRDFNode === globalO
     })
   }
 }
