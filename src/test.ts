@@ -1,6 +1,7 @@
 import hop, {
+  NamedNode,
+  RDFNode
 } from './index'
-import { NamedNode, RDFNode } from './internal'
 
 const rdf = {
   label: 'https://rdf.com/label',
@@ -38,7 +39,7 @@ const earth = hop.namedNode(ELEMENT_PREFIX + "earth")
 const fire = hop.namedNode(ELEMENT_PREFIX + "fire")
 const air = hop.namedNode(ELEMENT_PREFIX + 'air')
 
-// console.log(fire.out(rdf.label).one().value()) // "fire^^xsd:string"
+console.log(fire.out(rdf.label).one().value()) // "fire^^xsd:string"
 
 // // -----------------------------
 
@@ -71,7 +72,7 @@ characters.forEach((personA: NamedNode) => {
   })
 })
 
-// console.log(characterGraph.nodes().map(node => node.toString()))
+console.log(characterGraph.nodes().map(node => node.toString()))
 
 // // -----------------------------
 const toph = hop.namedNode(CHARACTER_PREFIX + 'Toph')
