@@ -1,11 +1,11 @@
-export default function func(options: Object): Function {
-  return function fooBar() {
-    let foo = 1;
+import Hopper from './GlobalGraph'
+// export {default as Hopper} from './GlobalGraph'
+// export {default as Graph} from './Graph';
+// export {default as NodeSet} from './NodeSet'
+// export {default as Literal} from './Literal'
+// export {default as NamedNode} from './NamedNode'
+// export {default as BlankNode} from './BlankNode'
 
-    if (options) {
-      foo = 2;
-    }
+const hop: Hopper = new Hopper()
 
-    return foo;
-  };
-}
+export default hop
